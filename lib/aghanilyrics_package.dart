@@ -26,7 +26,7 @@ class FetchSongs {
       }
     } catch (e) {
       logger.d('Error: $e');
-      return [];
+      rethrow;
     }
   }
 
@@ -51,7 +51,7 @@ class FetchSongs {
       }
     } catch (e) {
       logger.d('Error: $e');
-      return [];
+      rethrow;
     }
   }
 
@@ -135,7 +135,7 @@ class FetchSongs {
       }
     } catch (e) {
       logger.d('Error: $e');
-      return [];
+      rethrow;
     }
   }
 
@@ -194,7 +194,7 @@ class FetchSongs {
     } catch (e) {
 
         logger.d('Error: $e');
-        return [];
+        rethrow;
     }
   }
 
@@ -234,7 +234,7 @@ class FetchSongs {
       }
     } catch (e) {
       logger.e('Error fetching lyrics: $e');
-      return [];
+      rethrow;
     }
   }
 
