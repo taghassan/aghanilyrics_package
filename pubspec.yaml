@@ -13,6 +13,8 @@ dependencies:
   html:
   dio:
   logger:
+  path_provider:
+  just_audio:
 
 dev_dependencies:
   flutter_test:
