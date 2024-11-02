@@ -6,28 +6,24 @@ import 'package:dio/dio.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:logger/logger.dart';
 
-class FetchSingersParamsModel{
- final String? ar;
-  final String? en;
-  final String? path;
- FetchSingersParamsModel({this.ar,this.en,this.path});
+class FetchSingersParamsModel {
+  final String? ar, en, path, songs;
+
+  FetchSingersParamsModel({this.ar, this.en, this.path, this.songs});
 }
 
 class FetchSongs {
-
   final Dio client = Dio(BaseOptions(baseUrl: "https://aghanilyrics.com"));
 
   final logger = Logger();
 
-  Future<List<SingerResponseModel>> fetchNewSingers()async{
+  Future<List<SingerResponseModel>> fetchNewSingers() async {
     try {
       var response = await client.get('/kalimat-aghani.php');
 
       if (response.statusCode == 200) {
-
         return extractSingerFromResponse(response);
       } else {
-
         logger.d('Failed to load data: ${response.statusCode}');
         return [];
       }
@@ -37,20 +33,15 @@ class FetchSongs {
     }
   }
 
-
-
-  Future<List<SingerResponseModel>> fetchSingers({
-   required FetchSingersParamsModel params
-  }) async {
+  Future<List<SingerResponseModel>> fetchSingers(
+      {required FetchSingersParamsModel params}) async {
     try {
-      Response response = await client.get('/${params.path??'song-lyrics'}.php?en=${params.en??'Sudan'}&ar=${params.ar??'كلمات-اغاني-سودانية'}');
-
+      Response response = await client.get(
+          '/${params.path ?? 'song-lyrics'}.php?en=${params.en ?? 'Sudan'}&ar=${params.ar ?? 'كلمات-اغاني-سودانية'}${params.songs!=null?'&songs=${params.songs}':''}');
 
       if (response.statusCode == 200) {
-
         return extractSingerFromResponse(response);
       } else {
-
         logger.d('Failed to load data: ${response.statusCode}');
         return [];
       }
@@ -60,7 +51,8 @@ class FetchSongs {
     }
   }
 
-  Future<List<SingerResponseModel>> extractSingerFromResponse(Response response)async{
+  Future<List<SingerResponseModel>> extractSingerFromResponse(
+      Response response) async {
     final document = parser.parse(response.data);
     final tableRows = document.getElementsByTagName('tr');
 
@@ -76,7 +68,6 @@ class FetchSongs {
         String count = columns[1].text.trim();
         String country = columns[2].text.trim();
 
-
         logger.i(
             "singerName  $lyricsUrl count $count country $country $singerName lyricsUrl");
 
@@ -91,16 +82,12 @@ class FetchSongs {
     return extractedSongList;
   }
 
-
-  Future<List<SongResponseModel>>  fetchByCategory({
-    String en = 'Sudan',
-    String ar = 'كلمات-اغاني-سودانية',
-    String? songs
-  })async{
-
+  Future<List<SongResponseModel>> fetchByCategory(
+      {String en = 'Sudan',
+      String ar = 'كلمات-اغاني-سودانية',
+      String? songs}) async {
     try {
       var response = await client.get('/singer.php?en=$en&ar=$ar&songs=$songs');
-
 
       if (response.statusCode == 200) {
         final document = parser.parse(response.data);
@@ -119,22 +106,21 @@ class FetchSongs {
             String lyrics = columns[1].text.trim();
             String composer = columns[2].text.trim();
 
-
             logger.i(
                 "singerName  $lyricsUrl count $lyrics country $composer $songName lyricsUrl");
 
-            extractedSongList.add(SongResponseModel(
-                songName: songName,
-                lyricsUrl: lyricsUrl,
-                composer: composer,
-                lyrics: lyrics
-            ),);
+            extractedSongList.add(
+              SongResponseModel(
+                  songName: songName,
+                  lyricsUrl: lyricsUrl,
+                  composer: composer,
+                  lyrics: lyrics),
+            );
           }
         }
 
         return extractedSongList;
-      }else{
-
+      } else {
         logger.d('Failed to load data: ${response.statusCode}');
         return [];
       }
@@ -144,16 +130,14 @@ class FetchSongs {
     }
   }
 
-
   ///
-///
+  ///
 
   Future<List<SongResponseModel>> fetchSongData({required String? url}) async {
-
-    url ??= 'https://aghanilyrics.com/allsongslyrics.php?songslyrics=osman-hussein&ar=%D9%83%D9%84%D9%85%D8%A7%D8%AA-%D8%A7%D8%BA%D8%A7%D9%86%D9%8A-%D8%B9%D8%AB%D9%85%D8%A7%D9%86-%D8%AD%D8%B3%D9%8A%D9%86';
+    url ??=
+        'https://aghanilyrics.com/allsongslyrics.php?songslyrics=osman-hussein&ar=%D9%83%D9%84%D9%85%D8%A7%D8%AA-%D8%A7%D8%BA%D8%A7%D9%86%D9%8A-%D8%B9%D8%AB%D9%85%D8%A7%D9%86-%D8%AD%D8%B3%D9%8A%D9%86';
 
     try {
-
       final response = await client.get(url);
       if (response.statusCode == 200) {
         final document = parser.parse(response.data);
@@ -172,17 +156,15 @@ class FetchSongs {
             String composer = columns[2].text.trim();
             List<String>? fullLyrics = [];
 
-
             // findYoutubeVideo(songName:songName);
 
             extractedSongs.add(
-                SongResponseModel(
+              SongResponseModel(
                   songName: songName,
                   composer: composer,
                   lyrics: lyrics,
-                    lyricsUrl:lyricsUrl
-                ),
-                );
+                  lyricsUrl: lyricsUrl),
+            );
           }
           // setState(() {
           //   songs = extractedSongs;
@@ -192,24 +174,20 @@ class FetchSongs {
 
         return extractedSongs;
       } else {
-
-          logger.d('Failed to load data: ${response.statusCode}');
-          return [];
+        logger.d('Failed to load data: ${response.statusCode}');
+        return [];
       }
     } catch (e) {
-
-        logger.d('Error: $e');
-        rethrow;
+      logger.d('Error: $e');
+      rethrow;
     }
   }
 
-
   ///
-///
-///
+  ///
+  ///
 
   Future<List<String>> fetchLyrics(String lyricsUrl) async {
-
     try {
       final response = await client.get(lyricsUrl);
       if (response.statusCode == 200) {
@@ -224,7 +202,7 @@ class FetchSongs {
           return [
             '',
             ...paragraphs.map(
-                  (e) => e.text,
+              (e) => e.text,
             ),
             ''
           ];
@@ -242,6 +220,4 @@ class FetchSongs {
       rethrow;
     }
   }
-
-
 }
