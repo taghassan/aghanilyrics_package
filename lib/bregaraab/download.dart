@@ -7,8 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 
-class BADownloadManager{
-
+class BADownloadManager {
   final logger = Logger();
   var downloadValue = 0.0;
 
@@ -58,11 +57,13 @@ class BADownloadManager{
     }
   }
 
-  void showDownloadProgress(received, total) {
+  double showDownloadProgress(received, total) {
     if (total != -1) {
       logger.i((received / total * 100).toStringAsFixed(0) + "%");
       downloadValue = (received / total * 100);
-
+      return downloadValue;
+    } else {
+      return -1;
     }
   }
 
@@ -86,6 +87,4 @@ class BADownloadManager{
       return 'Failed to get platform version.';
     }
   }
-
-
 }

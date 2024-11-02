@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:aghanilyrics/bregaraab/download.dart';
 import 'package:aghanilyrics/bregaraab/models/CategoriesModel.dart';
 import 'package:aghanilyrics/bregaraab/models/SongsModel.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:html/dom.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:logger/logger.dart';
 import 'package:html/parser.dart' as parser;
@@ -14,7 +17,9 @@ class BregAraabSongs {
 
   final player = AudioPlayer();
 
-  Future<List<CategoriesModel>> getCategories() async {
+  StreamController fetchSongsStream = StreamController();
+
+  Future<List<CategoriesModel>> fetchCategories() async {
     var response = await client.get('/');
 
     var document = parser.parse(response.data);
@@ -24,15 +29,15 @@ class BregAraabSongs {
       categories.add(CategoriesModel(
           url: value.children.first.attributes["href"].toString(),
           name: value.children.first.innerHtml));
-      logger.i("Category = ${value.children.first.innerHtml}");
+
       logger.i(
-          "Category href = ${value.children.first.attributes["href"].toString()}");
+          "Category = ${value.children.first.innerHtml}\nCategory href = ${value.children.first.attributes["href"].toString()}");
     }
 
     return categories;
   }
 
-  Future<List<SongsModel>> getSongs({required String url}) async {
+  Future<List<SongsModel>> fetchSongs({required String url}) async {
     try {
       List<SongsModel> songsList = [];
 
@@ -61,62 +66,128 @@ class BregAraabSongs {
     }
   }
 
-
-  getChildList(SongsModel songsList) async {
+  Future<List<Songs>> fetchChildList(SongsModel songsList) async {
     List<Songs> songsListDetails = [];
     try {
+      var singlePageResponse = await client.get("${songsList.url}");
 
+      var singlePageResponseHtml = parser.parse(singlePageResponse.data);
 
+      var songItems = singlePageResponseHtml
+          .getElementsByClassName("col-md-4 col-xs-12 pull-right");
 
+      //**
+      songsListDetails = songItems
+          .map(
+            (songItem) => Songs(
+                songName: songItem.children[1].innerHtml,
+                url: "${songItem.children[1].attributes['href']}"),
+          )
+          .toList();
+      //**
 
-        var singlePageResponse = await client.get("${songsList.url}");
+      /*
+      for (var songItem in songItems) {
+        // log("${songItem.children[1].innerHtml}");
+        // log("${songItem.children[1].attributes['href']}");
 
-        var singlePageResponseHtml = parser.parse(singlePageResponse.data);
-        singlePageResponseHtml
-            .getElementsByClassName("col-md-4 col-xs-12 pull-right")
-            .forEach((songItem) async {
-          // log("${songItem.children[1].innerHtml}");
-          // log("${songItem.children[1].attributes['href']}");
-          var singleSongPageResponse =
-          await client.get("${songItem.children[1].attributes['href']}");
-          var singleSongPageResponseHtml = parser.parse(singleSongPageResponse.data);
+        var link = "${songItem.children[1].attributes['href']}";
+        bool validURL = Uri.parse(link).isAbsolute;
+
+        if (validURL) {
+          var singleSongPageResponse = await client.get(link);
+          var singleSongPageResponseHtml =
+              parser.parse(singleSongPageResponse.data);
           if (singleSongPageResponseHtml
               .getElementsByTagName("audio")
               .isNotEmpty) {
-            logger.i("${singleSongPageResponseHtml.getElementsByTagName("audio").first.attributes["src"]}");
+            logger.i(
+                "${singleSongPageResponseHtml.getElementsByTagName("audio").first.attributes["src"]}");
             songsListDetails.add(Songs(
                 songName: songItem.children[1].innerHtml,
                 url:
-                "${singleSongPageResponseHtml.getElementsByTagName("audio").first.attributes["src"]}"));
-
-
-
+                    "${singleSongPageResponseHtml.getElementsByTagName("audio").first.attributes["src"]}"));
           }
-        });
 
+          fetchSongsStream.add({"total": songItems.length, "received": songsListDetails.length});
+        }
+      }
+       */
 
-
+      logger.d("songsListDetails $songsListDetails");
+      return songsListDetails;
     } catch (e) {
       logger.e(e.toString());
-      return null;
+      rethrow;
     }
-    return songsListDetails;
+  }
+
+  Future<String?> getSongUrl({String? songItemUrl}) async {
+    // log("${songItem.children[1].innerHtml}");
+    // log("${songItem.children[1].attributes['href']}");
+
+    if (songItemUrl == null || !Uri.parse(songItemUrl).isAbsolute) return null;
+
+    var singleSongPageResponse = await client.get(songItemUrl);
+    var singleSongPageResponseHtml = parser.parse(singleSongPageResponse.data);
+    if (singleSongPageResponseHtml.getElementsByTagName("audio").isNotEmpty) {
+      logger.i(
+          "${singleSongPageResponseHtml.getElementsByTagName("audio").first.attributes["src"]}");
+
+      return "${singleSongPageResponseHtml.getElementsByTagName("audio").first.attributes["src"]}";
+    }
+
+    return null;
+  }
+
+  playOnline(Songs? song) async {
+    // player.setUrl(savePath);
+    if (song == null) return;
+    String? url = await getSongUrl(songItemUrl: song.url);
+    if (url == null) return;
+    try {
+      player.setUrl(url);
+      // await player.setUrl(song?.url??'');
+    } on PlayerException catch (e) {
+      // iOS/macOS: maps to NSError.code
+      // Android: maps to ExoPlayerException.type
+      // Web: maps to MediaError.code
+      // Linux/Windows: maps to PlayerErrorCode.index
+      print("Error code: ${e.code}");
+      // iOS/macOS: maps to NSError.localizedDescription
+      // Android: maps to ExoPlaybackException.getMessage()
+      // Web/Linux: a generic message
+      // Windows: MediaPlayerError.message
+      print("Error message: ${e.message}");
+    } on PlayerInterruptedException catch (e) {
+      // This call was interrupted since another audio source was loaded or the
+      // player was stopped or disposed before this audio source could complete
+      // loading.
+      print("Connection aborted: ${e.message}");
+    } catch (e) {
+      // Fallback for all other errors
+      print('An error occured: $e');
+    }
+
+    player.play();
   }
 
   play(Songs? song) async {
+    if (song == null) return;
+    String? url = await getSongUrl(songItemUrl: song.url);
+    if (url == null) return;
 
-    BADownloadManager manager=BADownloadManager();
+    BADownloadManager manager = BADownloadManager();
 
     manager.downloadValue = 0.0;
 
-    await manager.download(
-        Songs(songName: song?.songName ?? '', url: "${song?.url}"), 0);
+    await manager.download(Songs(songName: song.songName ?? '', url: url), 0);
 
     if (kDebugMode) {
-      print("${song?.url}");
+      print(url);
     }
-    String savePath = await manager.getDownloadPath("${song?.songName}");
-    savePath = "$savePath/${song?.songName}.mp3";
+    String savePath = await manager.getDownloadPath("${song.songName}");
+    savePath = "$savePath/${song.songName}.mp3";
     if (kDebugMode) {
       print(savePath);
     }
@@ -147,6 +218,4 @@ class BregAraabSongs {
 
     player.play();
   }
-
-
 }
