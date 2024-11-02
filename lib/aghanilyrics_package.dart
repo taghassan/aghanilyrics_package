@@ -6,6 +6,13 @@ import 'package:dio/dio.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:logger/logger.dart';
 
+class FetchSingersParamsModel{
+ final String? ar;
+  final String? en;
+  final String? path;
+ FetchSingersParamsModel({this.ar,this.en,this.path});
+}
+
 class FetchSongs {
 
   final Dio client = Dio(BaseOptions(baseUrl: "https://aghanilyrics.com"));
@@ -33,12 +40,10 @@ class FetchSongs {
 
 
   Future<List<SingerResponseModel>> fetchSingers({
-    String en = 'Sudan',
-    String ar = 'كلمات-اغاني-سودانية',
-
+   required FetchSingersParamsModel params
   }) async {
     try {
-      Response response = await client.get('/song-lyrics.php?en=$en&ar=$ar');
+      Response response = await client.get('/${params.path??'song-lyrics'}.php?en=${params.en??'Sudan'}&ar=${params.ar??'كلمات-اغاني-سودانية'}');
 
 
       if (response.statusCode == 200) {
