@@ -15,6 +15,12 @@ dependencies:
   logger:
   path_provider:
   just_audio:
+  pretty_dio_logger:
+  gallery_saver:
+  equatable:
+  video_player:
+  video_thumbnail:
+  permission_handler:
 
 dev_dependencies:
   flutter_test:
