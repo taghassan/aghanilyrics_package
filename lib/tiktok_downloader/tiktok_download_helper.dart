@@ -1,18 +1,18 @@
 import 'dart:io';
 
 import 'package:aghanilyrics/dio_logger.dart';
-import 'package:aghanilyrics/tiktok_downloader/dir_helper.dart';
+import 'package:aghanilyrics/tiktok_downloader/helpers/dir_helper.dart';
 import 'package:aghanilyrics/tiktok_downloader/helpers/permissions_helper.dart';
-import 'package:aghanilyrics/tiktok_downloader/models/AnalysisResponseModel.dart';
 import 'package:aghanilyrics/tiktok_downloader/models/download_item.dart';
 import 'package:aghanilyrics/tiktok_downloader/models/save_video_params.dart';
 import 'package:aghanilyrics/tiktok_downloader/models/tiktok_video.dart';
+import 'package:aghanilyrics/tiktok_downloader/models/tiktok_video_model.dart';
 import 'package:aghanilyrics/tiktok_downloader/models/video_item.dart';
 import 'package:aghanilyrics/tiktok_downloader/utils/app_enums.dart';
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
+// import 'package:video_thumbnail/video_thumbnail.dart';
 
 class TiktokDownloadHelper {
   List<DownloadItem> newDownloads = [];
@@ -29,13 +29,13 @@ class TiktokDownloadHelper {
 
   final logger = Logger();
 
-  Future<AnalysisResponseModel> analysis({required String videoLink}) async {
+  Future<TiktokVideoModel> analysis({required String videoLink}) async {
     addPrettyDioLogger(client);
     try {
       var response =
           await client.get("/analysis", queryParameters: {"url": videoLink});
 
-      return AnalysisResponseModel.fromJson(response.data);
+      return TiktokVideoModel.fromJson(response.data);
     } catch (e) {
       rethrow;
     }
@@ -51,12 +51,13 @@ class TiktokDownloadHelper {
       if (file is File && file.path.endsWith('.mp4')) {
         final videoPath = file.path;
         if (newDownloadedVideosPaths.contains(videoPath)) continue;
-        final thumbnailPath = await VideoThumbnail.thumbnailFile(
-          video: videoPath,
-          thumbnailPath: (await getTemporaryDirectory()).path,
-          imageFormat: ImageFormat.PNG,
-          quality: 30,
-        );
+        final thumbnailPath ="";
+        // final thumbnailPath = await VideoThumbnail.thumbnailFile(
+        //   video: videoPath,
+        //   thumbnailPath: (await getTemporaryDirectory()).path,
+        //   imageFormat: ImageFormat.PNG,
+        //   quality: 30,
+        // );
         oldDownloads
             .add(VideoItem(path: videoPath)..thumbnailPath = thumbnailPath);
       }
@@ -66,16 +67,12 @@ class TiktokDownloadHelper {
 
 
 
-  Future<String> saveVideoLink(
-  {
-    required TikTokVideo tikTokVideo
-}
-      ) async {
-    bool checkPermissions = await PermissionsHelper.checkPermission();
-    if (!checkPermissions) {
-      logger.e("checkPermissions error");
-      return "checkPermissions error";
-    }
+  Future<String> saveVideoLink({required TikTokVideo tikTokVideo}) async {
+    // bool checkPermissions = await PermissionsHelper.checkPermission();
+    // if (!checkPermissions) {
+    //   logger.e("checkPermissions error");
+    //   return "checkPermissions error";
+    // }
     final path = await getPathById(tikTokVideo.videoData!.id);
     final link = processLink(tikTokVideo.videoData!.playVideo);
     DownloadItem item = DownloadItem(

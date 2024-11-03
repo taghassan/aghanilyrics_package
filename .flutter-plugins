@@ -1,6 +1,6 @@
 # This is a generated file; do not edit or check into version control.
 audio_session=/Users/tajeldeenhassan/.pub-cache/hosted/pub.dev/audio_session-0.1.21/
-gallery_saver=/Users/tajeldeenhassan/.pub-cache/hosted/pub.dev/gallery_saver-2.3.2/
+fluttertoast=/Users/tajeldeenhassan/.pub-cache/hosted/pub.dev/fluttertoast-8.2.8/
 just_audio=/Users/tajeldeenhassan/.pub-cache/hosted/pub.dev/just_audio-0.9.42/
 just_audio_web=/Users/tajeldeenhassan/.pub-cache/hosted/pub.dev/just_audio_web-0.4.13/
 path_provider=/Users/tajeldeenhassan/.pub-cache/hosted/pub.dev/path_provider-2.1.5/
@@ -17,4 +17,3 @@ video_player=/Users/tajeldeenhassan/.pub-cache/hosted/pub.dev/video_player-2.9.2
 video_player_android=/Users/tajeldeenhassan/.pub-cache/hosted/pub.dev/video_player_android-2.7.16/
 video_player_avfoundation=/Users/tajeldeenhassan/.pub-cache/hosted/pub.dev/video_player_avfoundation-2.6.2/
 video_player_web=/Users/tajeldeenhassan/.pub-cache/hosted/pub.dev/video_player_web-2.3.3/
-video_thumbnail=/Users/tajeldeenhassan/.pub-cache/hosted/pub.dev/video_thumbnail-0.5.3/

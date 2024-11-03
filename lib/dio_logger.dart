@@ -23,4 +23,31 @@ addPrettyDioLogger(Dio dio){
       }
   )
   );
+
+  dio.interceptors.add(
+    kDebugMode
+        ? LogInterceptor(
+      responseBody: true,
+      requestBody: true,
+      request: true,
+      requestHeader: true,
+      error: true,
+      responseHeader: true,
+      logPrint: (obj) {
+        debugPrint(obj.toString());
+      },
+    )
+        : LogInterceptor(
+      responseBody: false,
+      requestBody: false,
+      request: false,
+      requestHeader: false,
+      error: false,
+      responseHeader: false,
+      logPrint: (obj) {
+        // debugPrint(obj.toString());
+      },
+    ),
+  );
+
 }
