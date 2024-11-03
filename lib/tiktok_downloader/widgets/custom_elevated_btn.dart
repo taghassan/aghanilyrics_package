@@ -18,7 +18,7 @@ class CustomElevatedBtn extends StatelessWidget {
       width: width ?? context.width / 2,
       child: ElevatedButton(
         onPressed: onPressed,
-        child: Text(label),
+        child: Text(label,textAlign: TextAlign.center,),
       ),
     );
   }

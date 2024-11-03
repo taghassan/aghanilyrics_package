@@ -1,8 +1,8 @@
 
-
 import 'package:aghanilyrics/tiktok_downloader/models/mappers.dart';
 import 'package:aghanilyrics/tiktok_downloader/models/tiktok_video.dart';
-import 'package:aghanilyrics/tiktok_downloader/models/video_data_model.dart';
+
+import 'video_data_model.dart';
 
 class TiktokVideoModel extends TikTokVideo {
   const TiktokVideoModel({

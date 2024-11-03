@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:aghanilyrics/dio_logger.dart';
 import 'package:aghanilyrics/tiktok_downloader/helpers/dir_helper.dart';
 import 'package:aghanilyrics/tiktok_downloader/helpers/permissions_helper.dart';
+import 'package:aghanilyrics/tiktok_downloader/models/AnalysisResponseModel.dart';
 import 'package:aghanilyrics/tiktok_downloader/models/download_item.dart';
 import 'package:aghanilyrics/tiktok_downloader/models/save_video_params.dart';
 import 'package:aghanilyrics/tiktok_downloader/models/tiktok_video.dart';
@@ -12,6 +13,9 @@ import 'package:aghanilyrics/tiktok_downloader/utils/app_enums.dart';
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
+
+// import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:html/parser.dart' as html_parser;
 // import 'package:video_thumbnail/video_thumbnail.dart';
 
 class TiktokDownloadHelper {
@@ -41,6 +45,82 @@ class TiktokDownloadHelper {
     }
   }
 
+  Future<AnalysisResponseModel> fetchAnalysis(
+      {required String videoLink}) async {
+    addPrettyDioLogger(client);
+    try {
+      var response =
+          await client.get("/analysis", queryParameters: {"url": videoLink});
+
+      return AnalysisResponseModel.fromJson(response.data);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<AnalysisResponseModel> fetchAnalysisAjax(
+      {required String videoLink}) async {
+    addPrettyDioLogger(client);
+    try {
+      var headers = {
+        'content-type': 'application/x-www-form-urlencoded',
+        'cookie':
+            '_ga=GA1.1.558764525.1730653929; fpestid=IYtdZdm6qssSXgaY7yKp9kDlL7FFPDqTF1IKhhllWzZat4UcTycOw-HIyzOcqyVLUs5DdA; trp_language=ar; _cc_id=642a29609ee6854aef121170e8b8cee; panoramaId_expiry=1731258731899; panoramaId=b6d6c24f9689a4d85cca3f6286b616d53938a8392e9a058e26a4ff223dc088b5; panoramaIdType=panoIndiv; _ga_DWYR5ZNKYQ=GS1.1.1730658871.2.1.1730658874.57.0.0',
+        'hx-current-url': 'https://tiktokio.com/ar/',
+        'hx-request': 'true',
+        'hx-target': 'tiktok-parse-result',
+        'hx-trigger': 'search-btn',
+        'origin': 'https://tiktokio.com',
+        'priority': 'u=1, i',
+        'referer': 'https://tiktokio.com/ar/',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"macOS"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-origin'
+      };
+      var data = {'prefix': 'dtGslxrcdcG9raW8uY29t', 'vid': videoLink};
+      var dio = Dio();
+      var response = await dio.request(
+        'https://tiktokio.com/api/v1/tk-htmx',
+        options: Options(
+          method: 'POST',
+          headers: headers,
+        ),
+        data: data,
+      );
+
+      List<Link> links = [];
+      String? title = '';
+      try {
+        links = extractLinks(response.data);
+      } catch (e) {}
+
+      try {
+        title = extractTitle(response.data);
+      } catch (e) {}
+
+      // print(json.encode(response.data));
+      return AnalysisResponseModel(
+          code: 0,
+          msg: "success",
+          processedTime: 0.8582,
+          data: TiktokVideoData(
+            id: '${DateTime.now().microsecondsSinceEpoch}',
+            title: title ?? '',
+            play: links.first.url,
+            cover: links.first.imageUrl,
+            originCover: links.first.imageUrl,
+            links: links,
+            playCount: 0,
+            downloadCount: 0,
+            duration: 0,
+          ));
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<List<VideoItem>> loadOldDownloads() async {
     oldDownloads.clear();
     final path = await DirHelper.getAppPath();
@@ -51,7 +131,7 @@ class TiktokDownloadHelper {
       if (file is File && file.path.endsWith('.mp4')) {
         final videoPath = file.path;
         if (newDownloadedVideosPaths.contains(videoPath)) continue;
-        final thumbnailPath ="";
+        final thumbnailPath = "";
         // final thumbnailPath = await VideoThumbnail.thumbnailFile(
         //   video: videoPath,
         //   thumbnailPath: (await getTemporaryDirectory()).path,
@@ -65,16 +145,17 @@ class TiktokDownloadHelper {
     return oldDownloads;
   }
 
-
-
-  Future<String> saveVideoLink({required TikTokVideo tikTokVideo}) async {
+  Future<String> saveVideoLink(
+      {required AnalysisResponseModel tikTokVideo,
+      required Link linkModel,
+      bool? useFullLink}) async {
     // bool checkPermissions = await PermissionsHelper.checkPermission();
     // if (!checkPermissions) {
     //   logger.e("checkPermissions error");
     //   return "checkPermissions error";
     // }
-    final path = await getPathById(tikTokVideo.videoData!.id);
-    final link = processLink(tikTokVideo.videoData!.playVideo);
+    final path = await getPathById(tikTokVideo.videoData!.id ?? '');
+    final link = processLink(linkModel.url ?? '');
     DownloadItem item = DownloadItem(
       video: tikTokVideo,
       status: DownloadStatus.downloading,
@@ -84,9 +165,7 @@ class TiktokDownloadHelper {
     int index = checkIfItemIsExistInDownloads(item);
     addItem(index, item);
 
-
-    try{
-
+    try {
       final result = await saveVideo(
         videoLink: params.videoLink,
         savePath: params.savePath,
@@ -94,9 +173,9 @@ class TiktokDownloadHelper {
 
       updateItem(index, item.copyWith(status: DownloadStatus.success));
       return result;
-    }catch(e){
+    } catch (e) {
       updateItem(index, item.copyWith(status: DownloadStatus.error));
-      return "error";
+      rethrow;
     }
   }
 
@@ -116,6 +195,7 @@ class TiktokDownloadHelper {
       await download(savePath: savePath, downloadLink: videoLink);
       return "Download success";
     } catch (error) {
+      logger.e("Download filed $error");
       rethrow;
     }
   }
@@ -136,9 +216,12 @@ class TiktokDownloadHelper {
     return index;
   }
 
-  String processLink(String link) {
-    bool isCorrectLink = link.endsWith(".mp4");
-    if (!isCorrectLink) link += ".mp4";
+  String processLink(String link, {bool? useFullLink}) {
+    if (useFullLink == false) {
+      bool isCorrectLink = link.endsWith(".mp4");
+      if (!isCorrectLink) link += ".mp4";
+    }
+
     return link;
   }
 
@@ -156,5 +239,39 @@ class TiktokDownloadHelper {
     } else {
       newDownloads[index] = item.copyWith(status: DownloadStatus.downloading);
     }
+  }
+
+  List<Link> extractLinks(String htmlContent) {
+    final document = html_parser.parse(htmlContent);
+    List<Link> links = [];
+
+    // Find all links with "a" tag and get href and title
+    final linkElements = document.querySelectorAll('div.tk-down-link a');
+    final imageElement = document.querySelector('img');
+
+    for (var element in linkElements) {
+      final title = element.text.trim();
+      final url = element.attributes['href'] ?? '';
+      final imageUrl = imageElement?.attributes['src'] ?? '';
+
+      if (url.isNotEmpty && url != 'javascript:void(0);') {
+        links.add(Link(title: title, url: url, imageUrl: imageUrl));
+      }
+    }
+
+    for (Link link in links) {
+      logger.d("------------------------------------");
+      logger.i("links title  ${link.title}");
+      logger.i("links url ${link.url}");
+      logger.i("links imageUrl ${link.imageUrl}");
+      logger.d("------------------------------------");
+    }
+    return links;
+  }
+
+  String extractTitle(String htmlContent) {
+    final document = html_parser.parse(htmlContent);
+    final h2Element = document.querySelector('#tk-search-h2');
+    return h2Element?.text.trim() ?? '';
   }
 }
