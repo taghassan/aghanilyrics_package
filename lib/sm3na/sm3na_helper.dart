@@ -9,24 +9,36 @@ import 'package:html/parser.dart' as parser;
 import 'package:html/dom.dart' as dom;
 
 class Sm3naHelper with LoggerHelper {
-  Dio client=Dio(
-    BaseOptions(
-      baseUrl: "https://www.sm3na.com"
-    )
-  );
+  Dio client = Dio(BaseOptions(baseUrl: "https://www.sm3na.com"));
 
+  String? tokenId = '';
 
-  Future<Sm3naSongsResponseModel> loadMore({required String url,String? start,String?filter}) async {
+  Future<Sm3naSongsResponseModel> loadMore(
+      {required String url, String? start, String? filter}) async {
     try {
+      logger.i("tokenId $tokenId");
       var headers = {
+        'accept': '*/*',
+        'accept-language':
+            'ar-SD,ar;q=0.9,en-GB;q=0.8,en;q=0.7,en-US;q=0.6,zh-CN;q=0.5,zh;q=0.4',
         'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'cookie':
-        'PHPSESSID=r5h3frq4it2m1ph1noeq9li2qo; lang=arabic; _gcl_au=1.1.1195947117.1730698800; cf_clearance=atzUlsb_HP45cjqZvGNFFHaGN023y6FRzrZjuhEjO6Q-1730698800-1.2.1.1-vU._bj9EGu7dSZAGZQe6mB.3akbqWctjwPho23.JgCOo7Rp1CuO4htZSL3NH8nGIkjCPOBjbOld1DMIT8Zmhfmd6ZDonmWsQRvSM7ZEh7fBad6Sj74Nd8_ldWQHp896jrqu9Xa1m6BF09K1M48PqLtjJPOYNvIAlOWYh8.HI7m08JjluI3hG4Gq0An2oXmeTonDk0w5r1QIL5G3B21i24TNLvnYAvDb6hencGXt3S900xgyNEHmRXO7rQLsVcuVhU9tAEYcH_J0Li1ce55W49ayfZw6EJ8eHvrQ_ez8bI_NL5rOfpH9rZVFMXRWgfmgBY5mpl6D4wQFr1K9ozJGQjrI41kfB.uphDnkgLWd8iEvSzlZLG1pQTFOrhOoBIebNZn_vdG3jgXPUuZ2BBD16Zg; PHPSESSID=qrq7ke8voqovkoirclgterenlg; lang=arabic',
-        // 'origin': 'https://www.sm3na.com',
-        // 'referer': 'https://www.sm3na.com/audios/18cc9daa29'
+        'cookie': 'lang=arabic; _gcl_au=1.1.89677333.1729534664; PHPSESSID=0pvcca8clmav1j3n1hhibejpmi; cf_clearance=4qZ31rol.7xlncciejNJonCGBp3FuV3yHpxz_JLZop0-1730738932-1.2.1.1-GgWJtcxUO6.JKM7nsWuXlnxcQRmPqmgLiqu_C8TVSk796pquPdvjSyopYoYI5ts92sTqr0vb8r9YKL3MhTF4_N7.ltUFOqpbga3f0wNI07igLf8EZNThhn50OrIAkaYIWXXDaz.RRAWgsvrRLZ.EQcKIIg9tgxeSUEXAV_tL2z4rMoQYK6QxPiHdc8SwnY8x0MIqNXTFVk1th2m3Yrxlyk1OTEsB2cwIx3sP5Y2tJZeU1or5ugvjgOt2FemtyBPdIsw9hzhHsS0UkH8YiKcsazr0V40Y0RcNEq6rc0IJgvJ3J.A9UrvHJ7tcilZWp9X0u90Vko_qI3L08PAbMAtnu1NlnjcR_3lBbAiEGtQcBYEI5gktjjcthYBFTXQcqJVqnx3yJWxHisUsffhpdKV7Xw; PHPSESSID=f42uunkime9772ui74b94c5vv8; lang=arabic',
+        'origin': 'https://www.sm3na.com',
+        'priority': 'u=1, i',
+        'referer': 'https://www.sm3na.com/audios/18cc9daa29',
+        'sec-ch-ua':
+            '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"macOS"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-origin',
+        'user-agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+        'x-requested-with': 'XMLHttpRequest'
       };
       var data =
-      '''start=${start??'29444'}&filter=${filter??'832'}&token_id=58d0c791932bba966d3d158f8337a7b7''';
+          '''start=${start ?? '29444'}&filter=${filter ?? '832'}&token_id=9256f2ae7e4ab198037f0ab71d845716''';
       var dio = Dio();
       var response = await dio.request(
         'https://www.sm3na.com/requests/load_explore.php',
@@ -36,7 +48,8 @@ class Sm3naHelper with LoggerHelper {
         ),
         data: data,
       );
-var noMoreDataError='لا توجد نتائج متوفره. برجاء البحث بصيغه اخرى.';
+      var noMoreDataError = 'لا توجد نتائج متوفره. برجاء البحث بصيغه اخرى.';
+      logger.i("Load More data ${response.data}");
       if (response.data != null && response.data.toString().isNotEmpty) {
         var mainContainers = parser.parse(response.data);
         if (mainContainers.querySelector('.message-inner')?.text.trim() ==
@@ -44,7 +57,7 @@ var noMoreDataError='لا توجد نتائج متوفره. برجاء البح�
           logger.e(mainContainers.querySelector('.message-inner')?.text.trim());
           throw "noMoreData";
         } else {
-        return  extractSongs(mainContainers.body);
+          return extractSongs(mainContainers.body);
         }
       } else {
         logger.e("No content");
@@ -59,54 +72,69 @@ var noMoreDataError='لا توجد نتائج متوفره. برجاء البح�
   Future<Sm3naSongsResponseModel> fetchSingerPage({required String url}) async {
     var sm3na = await client.get(url);
 
+    getToken(sm3na);
+
     var document = parser.parse(sm3na.data);
 
     var mainContainers = document.querySelector('#main-content');
 
-   return extractSongs(mainContainers);
+    return extractSongs(mainContainers);
+  }
+
+  getToken(Response sm3na) {
+    try {
+      logger.i("${sm3na.headers}");
+
+      final html = sm3na.data.toString();
+
+      // Use a regular expression to find the token_id
+      final tokenIdRegex = RegExp(r'token_id\s*=\s*"([^"]+)"');
+      final match = tokenIdRegex.firstMatch(html);
+
+      if (match != null) {
+        tokenId = match.group(1);
+        logger.i('Token ID: $tokenId');
+      } else {
+        logger.e('Token ID not found.');
+      }
+    } catch (e) {}
   }
 
   Sm3naSongsResponseModel extractSongs(dom.Element? mainContainers) {
-    Map<String,dynamic>? response={
-      "start":"-1",
-      "filter":"-1",
-      "songs":[]
+    Map<String, dynamic>? response = {
+      "start": "-1",
+      "filter": "-1",
+      "songs": []
     };
-    List<Map<String,dynamic>> songs=[];
+    List<Map<String, dynamic>> songs = [];
     try {
-
       var author = mainContainers?.querySelector('#load-more div a');
 
-      if(author!=null)
-      {
+      if (author != null) {
         var exploreTracks = author.attributes['onclick'];
         RegExp regExp = RegExp(r'\d+');
         Iterable<Match> matches = regExp.allMatches(exploreTracks.toString());
         List<int> numbers =
-        matches.map((match) => int.parse(match.group(0)!)).toList();
+            matches.map((match) => int.parse(match.group(0)!)).toList();
         var start = numbers.first;
         var filter = numbers.last;
 
-        response['start']='$start';
-        response['filter']='$filter';
+        response['start'] = '$start';
+        response['filter'] = '$filter';
 
         // logger.w(
         //     "exploreTracks ${author.attributes['onclick']} start= $start filter= $filter");
-      }else{
+      } else {
         // logger.e("no exploreTracks Info ");
       }
-
     } catch (e) {
       logger.e(e.toString());
     }
 
-
-
     //***************** created by TajEldeen *****************//
     //
     //********************************************************//
-    try{
-
+    try {
       var songContainers = mainContainers?.querySelectorAll('.song-container');
 
       for (dom.Element? songContainer in songContainers ?? []) {
@@ -117,14 +145,15 @@ var noMoreDataError='لا توجد نتائج متوفره. برجاء البح�
             ?.attributes['title'];
         var songSinger = songContainer
             ?.querySelector('.song-top .song-titles .song-author a')
-            ?.text.trim();
+            ?.text
+            .trim();
 
         // logger.i("songAuthor $songAuthor");
 
         var src =
-        songContainer?.querySelector('.song-art a img')?.attributes['src'];
+            songContainer?.querySelector('.song-art a img')?.attributes['src'];
         var imageAlt =
-        songContainer?.querySelector('.song-art a img')?.attributes['alt'];
+            songContainer?.querySelector('.song-art a img')?.attributes['alt'];
 
         var songTop = songContainer?.querySelector('.song-top div')?.attributes;
 
@@ -133,42 +162,39 @@ var noMoreDataError='لا توجد نتائج متوفره. برجاء البح�
         // logger.i(
         //     "song-songTop  ${songTop?['data-track-name']}  ${songTop?['data-track-id']} ${songTop?['id']} ${songTop?['data-track-url']} ${songTop?['data-track-format']}");
         songs.add({
-          "song_title":songTitle,
-          "image":{
-            "src":"$src",
-            "alt":"$imageAlt"
-          },
-          "track":{
-            "id":"${songTop?['id']}",
-            "track_id":"${songTop?['data-track-id']}",
-            "name":"${songTop?['data-track-name']}",
-            "url":"${songTop?['data-track-url']}",
-            "format":"${songTop?['data-track-format']}",
-            "song_singer":songSinger
+          "song_title": songTitle,
+          "image": {"src": "$src", "alt": "$imageAlt"},
+          "track": {
+            "id": "${songTop?['id']}",
+            "track_id": "${songTop?['data-track-id']}",
+            "name": "${songTop?['data-track-name']}",
+            "url": "${songTop?['data-track-url']}",
+            "format": "${songTop?['data-track-format']}",
+            "song_singer": songSinger
           }
         });
       }
-      response['songs']=songs;
+      response['songs'] = songs;
 
       // logDeveloper("${jsonEncode(response)}");
 
       return Sm3naSongsResponseModel.fromJson(response);
-    }catch(e){
+    } catch (e) {
       logger.e(e.toString());
       rethrow;
     }
   }
 
- Future<List<SingerPageReponseModel>> fetchCategorySingers({required String url}) async {
-
-    try{
-
+  Future<List<SingerPageReponseModel>> fetchCategorySingers(
+      {required String url}) async {
+    try {
       var sm3na = await client.get(url);
-
+      getToken(sm3na);
       var document = parser.parse(sm3na.data);
       // List to hold each section's extracted data
       List<Map<String, dynamic>> sections = [];
-      List<dom.Element> headers = document.querySelectorAll('.artists-container');
+      List<dom.Element> headers =
+          document.querySelectorAll('.artists-container');
       for (dom.Element headerElement in headers) {
         List<Map<String, dynamic>> linksData = [];
         // Extract header text
@@ -191,15 +217,17 @@ var noMoreDataError='لا توجد نتائج متوفره. برجاء البح�
       }
 
       logDeveloper(jsonEncode(sections));
-      return sections.map((e) => SingerPageReponseModel.fromJson(e),).toList();
-
-    }catch(e){
+      return sections
+          .map(
+            (e) => SingerPageReponseModel.fromJson(e),
+          )
+          .toList();
+    } catch (e) {
       rethrow;
     }
-
   }
 
- Future<List<ArtistListResponseModel>>  fetchArtistsList() async {
+  Future<List<ArtistListResponseModel>> fetchArtistsList() async {
     var sm3na = await client.get("/artists");
 
     var document = parser.parse(sm3na.data);
@@ -221,10 +249,17 @@ var noMoreDataError='لا توجد نتائج متوفره. برجاء البح�
         sibling.querySelectorAll('.heading_bg a').forEach((element) {
           final title = element.attributes['title'] ?? '';
           final url = element.attributes['href'] ?? '';
-          final isCategoryUrl = (element.attributes['href'] ?? '').contains('/cat');
-          final isAudiosUrl = (element.attributes['href'] ?? '').contains('/audios');
+          final isCategoryUrl =
+              (element.attributes['href'] ?? '').contains('/cat');
+          final isAudiosUrl =
+              (element.attributes['href'] ?? '').contains('/audios');
           if (title.isNotEmpty && url.isNotEmpty) {
-            links.add({'title': title, 'url': url,'is_category_url':isCategoryUrl,'is_audios_url':isAudiosUrl});
+            links.add({
+              'title': title,
+              'url': url,
+              'is_category_url': isCategoryUrl,
+              'is_audios_url': isAudiosUrl
+            });
           }
         });
       }
@@ -236,8 +271,11 @@ var noMoreDataError='لا توجد نتائج متوفره. برجاء البح�
       });
     }
     // logDeveloper("sections ${jsonEncode(sections)}");
-    return sections.map((section) =>  ArtistListResponseModel.fromJson(section),).toList();
-
+    return sections
+        .map(
+          (section) => ArtistListResponseModel.fromJson(section),
+        )
+        .toList();
   }
 
   fetchHomeCategories() async {
@@ -276,5 +314,4 @@ var noMoreDataError='لا توجد نتائج متوفره. برجاء البح�
       logger.e(e.toString());
     }
   }
-
 }
