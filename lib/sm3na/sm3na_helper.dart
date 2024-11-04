@@ -1,15 +1,22 @@
 import 'dart:convert';
 
 import 'package:aghanilyrics/logger_helper.dart';
+import 'package:aghanilyrics/sm3na/models/ArtistListResponseModel.dart';
+import 'package:aghanilyrics/sm3na/models/SingerPageReponseModel.dart';
+import 'package:aghanilyrics/sm3na/models/Sm3naSongsResponseModel.dart';
 import 'package:dio/dio.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:html/dom.dart' as dom;
 
 class Sm3naHelper with LoggerHelper {
-  Dio client=Dio();
+  Dio client=Dio(
+    BaseOptions(
+      baseUrl: "https://www.sm3na.com"
+    )
+  );
 
 
-  loadMore({String? start,String?filter}) async {
+  Future<Sm3naSongsResponseModel> loadMore({required String url,String? start,String?filter}) async {
     try {
       var headers = {
         'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -29,37 +36,40 @@ class Sm3naHelper with LoggerHelper {
         ),
         data: data,
       );
-
+var noMoreDataError='لا توجد نتائج متوفره. برجاء البحث بصيغه اخرى.';
       if (response.data != null && response.data.toString().isNotEmpty) {
         var mainContainers = parser.parse(response.data);
         if (mainContainers.querySelector('.message-inner')?.text.trim() ==
-            'لا توجد نتائج متوفره. برجاء البحث بصيغه اخرى.') {
+            noMoreDataError) {
           logger.e(mainContainers.querySelector('.message-inner')?.text.trim());
+          throw "noMoreData";
         } else {
-          extractSongs(mainContainers.body);
+        return  extractSongs(mainContainers.body);
         }
       } else {
         logger.e("No content");
+        throw "noMoreData";
       }
     } catch (e) {
       logger.e(e.toString());
+      rethrow;
     }
   }
 
-  fetchSingerPage() async {
-    var sm3na = await client.get("https://www.sm3na.com/audios/5faf8d2e3b");
+  Future<Sm3naSongsResponseModel> fetchSingerPage({required String url}) async {
+    var sm3na = await client.get(url);
 
     var document = parser.parse(sm3na.data);
 
     var mainContainers = document.querySelector('#main-content');
 
-    extractSongs(mainContainers);
+   return extractSongs(mainContainers);
   }
 
-  void extractSongs(dom.Element? mainContainers) {
+  Sm3naSongsResponseModel extractSongs(dom.Element? mainContainers) {
     Map<String,dynamic>? response={
-      "start":"0",
-      "filter":"0",
+      "start":"-1",
+      "filter":"-1",
       "songs":[]
     };
     List<Map<String,dynamic>> songs=[];
@@ -80,10 +90,10 @@ class Sm3naHelper with LoggerHelper {
         response['start']='$start';
         response['filter']='$filter';
 
-        logger.w(
-            "exploreTracks ${author.attributes['onclick']} start= $start filter= $filter");
+        // logger.w(
+        //     "exploreTracks ${author.attributes['onclick']} start= $start filter= $filter");
       }else{
-        logger.e("no exploreTracks Info ");
+        // logger.e("no exploreTracks Info ");
       }
 
     } catch (e) {
@@ -140,45 +150,57 @@ class Sm3naHelper with LoggerHelper {
       }
       response['songs']=songs;
 
-      logDeveloper("$response");
+      // logDeveloper("${jsonEncode(response)}");
+
+      return Sm3naSongsResponseModel.fromJson(response);
     }catch(e){
       logger.e(e.toString());
+      rethrow;
     }
   }
 
-  fetchCategorySingers() async {
-    var sm3na = await client.get("https://www.sm3na.com/cat/sudanese_songs");
+ Future<List<SingerPageReponseModel>> fetchCategorySingers({required String url}) async {
 
-    var document = parser.parse(sm3na.data);
-    // List to hold each section's extracted data
-    List<Map<String, dynamic>> sections = [];
-    List<dom.Element> headers = document.querySelectorAll('.artists-container');
-    for (dom.Element headerElement in headers) {
-      List<Map<String, dynamic>> linksData = [];
-      // Extract header text
-      // String header = headerElement.text.trim();
-      dom.Element? header = headerElement.querySelector('table');
+    try{
 
-      var title = "${header?.querySelector('tr')?.text.trim()}";
-      List<dom.Element>? links = header?.querySelectorAll('tr td div div a');
-      logger.i("Extract header text $title");
-      for (dom.Element link in links ?? []) {
-        linksData.add({
-          "title": "${link.attributes['title']}",
-          "href": "${link.attributes['href']}"
-        });
-        logger
-            .i("Extract header text  ${link.text.trim()} ${link.attributes}  ");
+      var sm3na = await client.get(url);
+
+      var document = parser.parse(sm3na.data);
+      // List to hold each section's extracted data
+      List<Map<String, dynamic>> sections = [];
+      List<dom.Element> headers = document.querySelectorAll('.artists-container');
+      for (dom.Element headerElement in headers) {
+        List<Map<String, dynamic>> linksData = [];
+        // Extract header text
+        // String header = headerElement.text.trim();
+        dom.Element? header = headerElement.querySelector('table');
+
+        var title = "${header?.querySelector('tr')?.text.trim()}";
+        List<dom.Element>? links = header?.querySelectorAll('tr td div div a');
+        // logger.i("Extract header text $title");
+        for (dom.Element link in links ?? []) {
+          linksData.add({
+            "title": "${link.attributes['title']}",
+            "href": "${link.attributes['href']}"
+          });
+          // logger
+          //     .i("Extract header text  ${link.text.trim()} ${link.attributes}  ");
+        }
+
+        sections.add({"section_title": title, "links": linksData});
       }
 
-      sections.add({"section_title": title, "links": linksData});
+      logDeveloper(jsonEncode(sections));
+      return sections.map((e) => SingerPageReponseModel.fromJson(e),).toList();
+
+    }catch(e){
+      rethrow;
     }
 
-    logDeveloper("${sections}");
   }
 
-  fetchArtistsList() async {
-    var sm3na = await client.get("https://www.sm3na.com/artists");
+ Future<List<ArtistListResponseModel>>  fetchArtistsList() async {
+    var sm3na = await client.get("/artists");
 
     var document = parser.parse(sm3na.data);
 
@@ -213,8 +235,9 @@ class Sm3naHelper with LoggerHelper {
         "links": links,
       });
     }
+    // logDeveloper("sections ${jsonEncode(sections)}");
+    return sections.map((section) =>  ArtistListResponseModel.fromJson(section),).toList();
 
-    logDeveloper("sections $sections");
   }
 
   fetchHomeCategories() async {

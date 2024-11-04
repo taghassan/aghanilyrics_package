@@ -41,7 +41,7 @@ class DirHelper {
     final result = await SaverGallery.saveFile(
       skipIfExists: true,
       fileName: '${DateTime.now().microsecondsSinceEpoch}_TikTok_downloads.${fileExtinction??'mp4'}',
-      androidRelativePath: "TikTok_downloads", filePath: videoPath,
+      androidRelativePath: "Movies/TikTok_downloads/videos", filePath: videoPath,
     );
     return result;
   }
