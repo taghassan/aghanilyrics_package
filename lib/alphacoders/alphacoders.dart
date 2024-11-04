@@ -22,7 +22,7 @@ class AlphaCoderWallpaper {
 
       var items = document.getElementsByClassName("item");
 
-      for (dom.Element item in items ?? []) {
+      for (dom.Element item in items ) {
         try {
           var contentUrl = "${getMeta(item: item, metaKey: 'contentUrl')}";
           var bigPageUrl =

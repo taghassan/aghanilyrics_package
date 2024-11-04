@@ -2,20 +2,18 @@ import 'dart:io';
 
 import 'package:aghanilyrics/dio_logger.dart';
 import 'package:aghanilyrics/tiktok_downloader/helpers/dir_helper.dart';
-import 'package:aghanilyrics/tiktok_downloader/helpers/permissions_helper.dart';
 import 'package:aghanilyrics/tiktok_downloader/models/AnalysisResponseModel.dart';
 import 'package:aghanilyrics/tiktok_downloader/models/download_item.dart';
 import 'package:aghanilyrics/tiktok_downloader/models/save_video_params.dart';
-import 'package:aghanilyrics/tiktok_downloader/models/tiktok_video.dart';
 import 'package:aghanilyrics/tiktok_downloader/models/tiktok_video_model.dart';
 import 'package:aghanilyrics/tiktok_downloader/models/video_item.dart';
 import 'package:aghanilyrics/tiktok_downloader/utils/app_enums.dart';
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
-import 'package:path_provider/path_provider.dart';
 
 // import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:html/parser.dart' as html_parser;
+import 'package:saver_gallery/saver_gallery.dart';
 // import 'package:video_thumbnail/video_thumbnail.dart';
 
 class TiktokDownloadHelper {
@@ -148,14 +146,18 @@ class TiktokDownloadHelper {
   Future<String> saveVideoLink(
       {required AnalysisResponseModel tikTokVideo,
       required Link linkModel,
-      bool? useFullLink}) async {
+      bool? useFullLink,
+        String?fileExtinction
+      }) async {
     // bool checkPermissions = await PermissionsHelper.checkPermission();
     // if (!checkPermissions) {
     //   logger.e("checkPermissions error");
     //   return "checkPermissions error";
     // }
-    final path = await getPathById(tikTokVideo.videoData!.id ?? '');
+
+    final path = await getPathById(tikTokVideo.videoData!.id ?? '',fileExtinction: fileExtinction);
     final link = processLink(linkModel.url ?? '');
+
     DownloadItem item = DownloadItem(
       video: tikTokVideo,
       status: DownloadStatus.downloading,
@@ -192,7 +194,11 @@ class TiktokDownloadHelper {
     required String savePath,
   }) async {
     try {
-      await download(savePath: savePath, downloadLink: videoLink);
+     var response= await download(savePath: savePath, downloadLink: videoLink);
+
+     SaveResult result= await DirHelper.saveVideoToGallery(videoPath: savePath);
+     // await DirHelper.removeFileFromDownloadsDir(savePath);
+     logger.e("result $result $response");
       return "Download success";
     } catch (error) {
       logger.e("Download filed $error");
@@ -200,9 +206,9 @@ class TiktokDownloadHelper {
     }
   }
 
-  Future<String> getPathById(String id) async {
+  Future<String> getPathById(String id,{String?fileExtinction}) async {
     final appPath = await DirHelper.getAppPath();
-    return "$appPath/$id.mp4";
+    return "$appPath/$id.${fileExtinction??'mp4'}";
   }
 
   int checkIfItemIsExistInDownloads(DownloadItem item) {
@@ -221,7 +227,6 @@ class TiktokDownloadHelper {
       bool isCorrectLink = link.endsWith(".mp4");
       if (!isCorrectLink) link += ".mp4";
     }
-
     return link;
   }
 

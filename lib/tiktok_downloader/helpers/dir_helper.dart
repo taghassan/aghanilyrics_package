@@ -2,6 +2,7 @@ import 'dart:io';
 
 // import 'package:gallery_saver/gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:saver_gallery/saver_gallery.dart';
 
 class DirHelper {
   static Future<String> getAppPath() async {
@@ -33,8 +34,15 @@ class DirHelper {
     }
   }
 
-  static Future<void> saveVideoToGallery(videoPath) async {
-    // await GallerySaver.saveVideo(videoPath, albumName: 'TikTok_downloads');
+  static Future<SaveResult> saveVideoToGallery({
+   required String videoPath
+}) async {
+    final result = await SaverGallery.saveFile(
+      skipIfExists: true,
+      fileName: '${DateTime.now().microsecondsSinceEpoch}_TikTok_downloads.mp4',
+      androidRelativePath: "TikTok_downloads", filePath: videoPath,
+    );
+    return result;
   }
 
   static Future<void> removeFileFromDownloadsDir(videoPath) async {

@@ -2,7 +2,6 @@ import 'package:aghanilyrics/tiktok_downloader/models/AnalysisResponseModel.dart
 import 'package:aghanilyrics/tiktok_downloader/utils/app_enums.dart';
 
 
-import 'tiktok_video.dart';
 import 'package:equatable/equatable.dart';
 
 class DownloadItem extends Equatable {

@@ -4,7 +4,8 @@ version: 0.0.1+alpha
 homepage:
 
 environment:
-  sdk: ^3.5.3
+  sdk: ^3.4.4
+#  sdk: ^3.5.3
   flutter: ">=1.17.0"
 
 dependencies:
@@ -14,6 +15,7 @@ dependencies:
   dio:
   logger:
   path_provider:
+  saver_gallery:
   just_audio:
   pretty_dio_logger:
 #  gallery_saver:

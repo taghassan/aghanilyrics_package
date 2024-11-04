@@ -5,7 +5,6 @@ import 'package:aghanilyrics/bregaraab/models/CategoriesModel.dart';
 import 'package:aghanilyrics/bregaraab/models/SongsModel.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:html/dom.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:logger/logger.dart';
 import 'package:html/parser.dart' as parser;
