@@ -35,12 +35,27 @@ class DirHelper {
   }
 
   static Future<SaveResult> saveVideoToGallery({
-   required String videoPath
+   required String videoPath,
+  String?fileExtinction
 }) async {
     final result = await SaverGallery.saveFile(
       skipIfExists: true,
-      fileName: '${DateTime.now().microsecondsSinceEpoch}_TikTok_downloads.mp4',
+      fileName: '${DateTime.now().microsecondsSinceEpoch}_TikTok_downloads.${fileExtinction??'mp4'}',
       androidRelativePath: "TikTok_downloads", filePath: videoPath,
+    );
+    return result;
+  }
+
+  static Future<SaveResult> saveImageToGallery({
+   required String videoPath,
+    String?fileExtinction
+}) async {
+    var image = await File(videoPath).readAsBytes();
+    final result = await SaverGallery.saveImage(
+      image,
+      skipIfExists: true,
+      androidRelativePath: "Pictures/TikTok_downloads/images",
+      fileName: '${DateTime.now().microsecondsSinceEpoch}_TikTok_downloads.${fileExtinction??'png'}',
     );
     return result;
   }

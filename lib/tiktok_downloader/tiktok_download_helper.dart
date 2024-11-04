@@ -147,15 +147,15 @@ class TiktokDownloadHelper {
       {required AnalysisResponseModel tikTokVideo,
       required Link linkModel,
       bool? useFullLink,
-        String?fileExtinction
-      }) async {
+      String? fileExtinction}) async {
     // bool checkPermissions = await PermissionsHelper.checkPermission();
     // if (!checkPermissions) {
     //   logger.e("checkPermissions error");
     //   return "checkPermissions error";
     // }
 
-    final path = await getPathById(tikTokVideo.videoData!.id ?? '',fileExtinction: fileExtinction);
+    final path = await getPathById(tikTokVideo.videoData!.id ?? '',
+        fileExtinction: fileExtinction);
     final link = processLink(linkModel.url ?? '');
 
     DownloadItem item = DownloadItem(
@@ -189,16 +189,18 @@ class TiktokDownloadHelper {
     return await client.download(downloadLink, savePath);
   }
 
-  Future<String> saveVideo({
-    required String videoLink,
-    required String savePath,
-  }) async {
+  Future<String> saveVideo(
+      {required String videoLink,
+      required String savePath,
+      String? fileExtinction}) async {
     try {
-     var response= await download(savePath: savePath, downloadLink: videoLink);
+      var response =
+          await download(savePath: savePath, downloadLink: videoLink);
 
-     SaveResult result= await DirHelper.saveVideoToGallery(videoPath: savePath);
-     // await DirHelper.removeFileFromDownloadsDir(savePath);
-     logger.e("result $result $response");
+      SaveResult result = await DirHelper.saveVideoToGallery(
+          videoPath: savePath, fileExtinction: fileExtinction);
+      // await DirHelper.removeFileFromDownloadsDir(savePath);
+      logger.e("result $result $response");
       return "Download success";
     } catch (error) {
       logger.e("Download filed $error");
@@ -206,9 +208,9 @@ class TiktokDownloadHelper {
     }
   }
 
-  Future<String> getPathById(String id,{String?fileExtinction}) async {
+  Future<String> getPathById(String id, {String? fileExtinction}) async {
     final appPath = await DirHelper.getAppPath();
-    return "$appPath/$id.${fileExtinction??'mp4'}";
+    return "$appPath/$id.${fileExtinction ?? 'mp4'}";
   }
 
   int checkIfItemIsExistInDownloads(DownloadItem item) {
