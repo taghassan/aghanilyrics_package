@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:aghanilyrics/logger_helper.dart';
 import 'package:aghanilyrics/sm3na/models/ArtistListResponseModel.dart';
+import 'package:aghanilyrics/sm3na/models/SearchResultResponseModel.dart';
 import 'package:aghanilyrics/sm3na/models/SingerPageReponseModel.dart';
 import 'package:aghanilyrics/sm3na/models/Sm3naSongsResponseModel.dart';
 import 'package:dio/dio.dart';
@@ -34,6 +35,62 @@ class Sm3naHelper with LoggerHelper {
     } catch (e) {
       return null;
     }
+  }
+
+  Future<List<SearchResultResponseModel>> search({String? query,String? url,String? start,String? live}) async {
+
+    var sm3na = await Dio().get('https://www.sm3na.com');
+    logger.i("sm3na ${sm3na.headers['set-cookie']?[0]}");
+    var token = getToken(sm3na);
+    var headers = {
+      'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      'cookie': '${sm3na.headers['set-cookie']?[0]}',
+      'origin': 'https://www.sm3na.com',
+      'referer': url??'https://www.sm3na.com/audios/18cc9daa29'
+    };
+
+    var data = '''q=$query &start=${start??'1'}&live=${live??'1'}&token_id=$token''';
+    var dio = Dio();
+    var response = await dio.request(
+      'https://www.sm3na.com/requests/load_people.php',
+      options: Options(
+        method: 'POST',
+        headers: headers,
+      ),
+      data: data,
+    );
+    List<Map<String,dynamic>>  searchResultsList=[];
+    if (response.statusCode == 200) {
+      var document=  parser.parse(response.data);
+
+      var searchResults=document.querySelectorAll('.track-inner');
+
+
+      for(dom.Element result in searchResults)
+      {
+        var link=result.parent?.attributes['href'];
+        var image=result.querySelector('.search-image img')?.attributes['src'];
+        var linkText=result.querySelector('.search-text')?.text.trim();
+        var isManyAudios="${result.parent?.attributes['href']}".contains('audios');
+
+        searchResultsList.add({
+          "linkText":linkText,
+          "link":link,
+          "image":image,
+          "isManyAudios":isManyAudios
+        });
+        logger.i("document a ${result.parent?.attributes['href']}");
+        logger.i("document img ${result.querySelector('.search-image img')?.attributes['src']}");
+        logger.i("document text ${result.querySelector('.search-text')?.text.trim()}");
+
+      }
+
+    }
+    else {
+      print(response.statusMessage);
+    }
+
+    return searchResultsList.map((e) => SearchResultResponseModel.fromJson(e),).toList();
   }
 
 
