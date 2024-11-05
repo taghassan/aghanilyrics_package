@@ -13,19 +13,48 @@ class Sm3naHelper with LoggerHelper {
 
   String? tokenId = '';
 
+  getToken(Response sm3na) {
+    try {
+      String? tokenId;
+      logger.i("${sm3na.headers}");
+
+      final html = sm3na.data.toString();
+
+      // Use a regular expression to find the token_id
+      final tokenIdRegex = RegExp(r'token_id\s*=\s*"([^"]+)"');
+      final match = tokenIdRegex.firstMatch(html);
+
+      if (match != null) {
+        tokenId = match.group(1);
+        logger.i('Token ID: $tokenId');
+      } else {
+        logger.e('Token ID not found.');
+      }
+      return tokenId;
+    } catch (e) {
+      return null;
+    }
+  }
+
+
   Future<Sm3naSongsResponseModel> loadMore(
       {required String url, String? start, String? filter}) async {
     try {
+      var sm3na=await Dio().get('https://www.sm3na.com');
+      logger.i("sm3na ${sm3na.headers['set-cookie']?[0]}");
+      tokenId=getToken(sm3na);
+      var cookie='${sm3na.headers['set-cookie']?[0]}';
+
       logger.i("tokenId $tokenId");
       var headers = {
         'accept': '*/*',
         'accept-language':
             'ar-SD,ar;q=0.9,en-GB;q=0.8,en;q=0.7,en-US;q=0.6,zh-CN;q=0.5,zh;q=0.4',
         'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'cookie': 'lang=arabic; _gcl_au=1.1.89677333.1729534664; PHPSESSID=0pvcca8clmav1j3n1hhibejpmi; cf_clearance=4qZ31rol.7xlncciejNJonCGBp3FuV3yHpxz_JLZop0-1730738932-1.2.1.1-GgWJtcxUO6.JKM7nsWuXlnxcQRmPqmgLiqu_C8TVSk796pquPdvjSyopYoYI5ts92sTqr0vb8r9YKL3MhTF4_N7.ltUFOqpbga3f0wNI07igLf8EZNThhn50OrIAkaYIWXXDaz.RRAWgsvrRLZ.EQcKIIg9tgxeSUEXAV_tL2z4rMoQYK6QxPiHdc8SwnY8x0MIqNXTFVk1th2m3Yrxlyk1OTEsB2cwIx3sP5Y2tJZeU1or5ugvjgOt2FemtyBPdIsw9hzhHsS0UkH8YiKcsazr0V40Y0RcNEq6rc0IJgvJ3J.A9UrvHJ7tcilZWp9X0u90Vko_qI3L08PAbMAtnu1NlnjcR_3lBbAiEGtQcBYEI5gktjjcthYBFTXQcqJVqnx3yJWxHisUsffhpdKV7Xw; PHPSESSID=f42uunkime9772ui74b94c5vv8; lang=arabic',
+        'cookie': cookie,
         'origin': 'https://www.sm3na.com',
         'priority': 'u=1, i',
-        'referer': 'https://www.sm3na.com/audios/18cc9daa29',
+        'referer': url,
         'sec-ch-ua':
             '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"',
         'sec-ch-ua-mobile': '?0',
@@ -38,7 +67,7 @@ class Sm3naHelper with LoggerHelper {
         'x-requested-with': 'XMLHttpRequest'
       };
       var data =
-          '''start=${start ?? '29444'}&filter=${filter ?? '832'}&token_id=9256f2ae7e4ab198037f0ab71d845716''';
+          '''start=${start ?? '29444'}&filter=${filter ?? '832'}&token_id=$tokenId''';
       var dio = Dio();
       var response = await dio.request(
         'https://www.sm3na.com/requests/load_explore.php',
@@ -81,24 +110,24 @@ class Sm3naHelper with LoggerHelper {
     return extractSongs(mainContainers);
   }
 
-  getToken(Response sm3na) {
-    try {
-      logger.i("${sm3na.headers}");
-
-      final html = sm3na.data.toString();
-
-      // Use a regular expression to find the token_id
-      final tokenIdRegex = RegExp(r'token_id\s*=\s*"([^"]+)"');
-      final match = tokenIdRegex.firstMatch(html);
-
-      if (match != null) {
-        tokenId = match.group(1);
-        logger.i('Token ID: $tokenId');
-      } else {
-        logger.e('Token ID not found.');
-      }
-    } catch (e) {}
-  }
+  // getToken(Response sm3na) {
+  //   try {
+  //     logger.i("${sm3na.headers}");
+  //
+  //     final html = sm3na.data.toString();
+  //
+  //     // Use a regular expression to find the token_id
+  //     final tokenIdRegex = RegExp(r'token_id\s*=\s*"([^"]+)"');
+  //     final match = tokenIdRegex.firstMatch(html);
+  //
+  //     if (match != null) {
+  //       tokenId = match.group(1);
+  //       logger.i('Token ID: $tokenId');
+  //     } else {
+  //       logger.e('Token ID not found.');
+  //     }
+  //   } catch (e) {}
+  // }
 
   Sm3naSongsResponseModel extractSongs(dom.Element? mainContainers) {
     Map<String, dynamic>? response = {
