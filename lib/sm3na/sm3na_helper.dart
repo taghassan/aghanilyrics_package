@@ -78,12 +78,12 @@ class Sm3naHelper with LoggerHelper {
         data: data,
       );
       var noMoreDataError = 'لا توجد نتائج متوفره. برجاء البحث بصيغه اخرى.';
-      logger.i("Load More data ${response.data}");
+      // logger.i("Load More data ${response.data}");
       if (response.data != null && response.data.toString().isNotEmpty) {
         var mainContainers = parser.parse(response.data);
         if (mainContainers.querySelector('.message-inner')?.text.trim() ==
             noMoreDataError) {
-          logger.e(mainContainers.querySelector('.message-inner')?.text.trim());
+          // logger.e(mainContainers.querySelector('.message-inner')?.text.trim());
           throw "noMoreData";
         } else {
           return extractSongs(mainContainers.body);
