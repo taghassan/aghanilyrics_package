@@ -172,6 +172,9 @@ class BregAraabSongs {
   }
 
   setUrlAndPlay({required String url}){
+    if(player.playing){
+      player.stop();
+    }
     try {
       player.setUrl(url);
       // await player.setUrl(song?.url??'');
@@ -197,5 +200,7 @@ class BregAraabSongs {
     }
 
     player.play();
+
+
   }
 }

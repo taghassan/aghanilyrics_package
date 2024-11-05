@@ -200,7 +200,7 @@ class TiktokDownloadHelper {
       SaveResult result = await DirHelper.saveVideoToGallery(
           videoPath: savePath, fileExtinction: fileExtinction);
       // await DirHelper.removeFileFromDownloadsDir(savePath);
-      logger.e("result $result $response");
+      logger.i("result $result $response");
       return "Download success";
     } catch (error) {
       logger.e("Download filed $error");

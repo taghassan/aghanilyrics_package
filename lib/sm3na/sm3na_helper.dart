@@ -17,7 +17,7 @@ class Sm3naHelper with LoggerHelper {
   getToken(Response sm3na) {
     try {
       String? tokenId;
-      logger.i("${sm3na.headers}");
+      // logger.i("${sm3na.headers}");
 
       final html = sm3na.data.toString();
 
