@@ -171,9 +171,9 @@ class BregAraabSongs {
     setUrlAndPlay(url: savePath);
   }
 
-  setUrlAndPlay({required String url}){
+  setUrlAndPlay({required String url})async{
     if(player.playing){
-      player.stop();
+     await player.stop();
     }
     try {
       player.setUrl(url);
