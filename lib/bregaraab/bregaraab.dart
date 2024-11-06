@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:aghanilyrics/bregaraab/download.dart';
 import 'package:aghanilyrics/bregaraab/models/CategoriesModel.dart';
 import 'package:aghanilyrics/bregaraab/models/SongsModel.dart';
+import 'package:aghanilyrics/mp3_player/mp3player.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
@@ -14,8 +15,8 @@ class BregAraabSongs {
 
   final logger = Logger();
 
-  final player = AudioPlayer();
-
+  // final player = AudioPlayer();
+  final mp3Player =  Mp3player();
   StreamController fetchSongsStream = StreamController();
 
   Future<List<CategoriesModel>> fetchCategories() async {
@@ -145,7 +146,7 @@ class BregAraabSongs {
     String? url = await getSongUrl(songItemUrl: song.url);
     if (url == null) return;
 
-    setUrlAndPlay(url: url);
+    mp3Player.setUrlAndPlay(url: url);
   }
 
   play(Songs? song) async {
@@ -168,39 +169,8 @@ class BregAraabSongs {
       print(savePath);
     }
 
-    setUrlAndPlay(url: savePath);
+    mp3Player.setUrlAndPlay(url: savePath);
   }
 
-  setUrlAndPlay({required String url})async{
-    if(player.playing){
-     await player.stop();
-    }
-    try {
-      player.setUrl(url);
-      // await player.setUrl(song?.url??'');
-    } on PlayerException catch (e) {
-      // iOS/macOS: maps to NSError.code
-      // Android: maps to ExoPlayerException.type
-      // Web: maps to MediaError.code
-      // Linux/Windows: maps to PlayerErrorCode.index
-      print("Error code: ${e.code}");
-      // iOS/macOS: maps to NSError.localizedDescription
-      // Android: maps to ExoPlaybackException.getMessage()
-      // Web/Linux: a generic message
-      // Windows: MediaPlayerError.message
-      print("Error message: ${e.message}");
-    } on PlayerInterruptedException catch (e) {
-      // This call was interrupted since another audio source was loaded or the
-      // player was stopped or disposed before this audio source could complete
-      // loading.
-      print("Connection aborted: ${e.message}");
-    } catch (e) {
-      // Fallback for all other errors
-      print('An error occured: $e');
-    }
 
-    player.play();
-
-
-  }
 }

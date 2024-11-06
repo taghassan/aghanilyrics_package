@@ -1,12 +1,33 @@
+import 'dart:typed_data' as typed_data;
+
+
 import 'package:aghanilyrics/alphacoders/models/CategoriesResponseModel.dart';
 import 'package:aghanilyrics/alphacoders/models/FindingResponseModel.dart';
+import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:flutter/foundation.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:logger/logger.dart';
 import 'package:html/parser.dart' as parser;
+import 'package:saver_gallery/saver_gallery.dart';
 
 class AlphaCoderWallpaper {
-  final Dio client = Dio(BaseOptions(baseUrl: "https://alphacoders.com/"));
+
+  final Dio client = Dio(BaseOptions(baseUrl: "https://alphacoders.com/",headers: {
+    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+    'accept-language': 'en-US,en;q=0.9,ar;q=0.8',
+    'priority': 'u=0, i',
+    'sec-ch-ua': '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"macOS"',
+    'sec-fetch-dest': 'document',
+    'sec-fetch-mode': 'navigate',
+    'sec-fetch-site': 'none',
+    'sec-fetch-user': '?1',
+    'upgrade-insecure-requests': '1',
+    // 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
+  }));
   final logger = Logger();
 
   Future<List<FindingResponseModel>> fetchFinding(
@@ -73,9 +94,11 @@ class AlphaCoderWallpaper {
 
  Future<List<CategoriesResponseModel>> getWallCategories() async {
     try {
+      var cookieJar=CookieJar();
+      client.interceptors.add(CookieManager(cookieJar));
       List<CategoriesResponseModel> categories=[];
-      logger.d("https://alphacoders.com/");
-      var response = await Dio(BaseOptions()).get("https://alphacoders.com/");
+      logger.d("https://alphacoders.com/ with headers");
+      var response = await client.get("https://alphacoders.com/");
       var document = parser.parse(response.data);
 
       var features = document.getElementsByClassName("tag-feature");
@@ -107,7 +130,7 @@ class AlphaCoderWallpaper {
   }
 
   getWallpaper() async {
-    //https://wall.alphacoders.com/by_collection.php?id=384
+
     try {
       List<dynamic> images = [];
       for (var i = 1; i <= 500; i++) {
@@ -117,7 +140,7 @@ class AlphaCoderWallpaper {
             logger.d(
                 "https://wall.alphacoders.com/by_collection.php?id=654&quickload=1&page=$i");
             try {
-              var response = await Dio(BaseOptions()).get(
+              var response = await client.get(
                   "https://wall.alphacoders.com/by_collection.php?id=654&quickload=1&page=$i");
               var document = parser.parse(response.data);
               document
@@ -162,7 +185,7 @@ class AlphaCoderWallpaper {
             try {
               logger.d(
                   "https://mobile.alphacoders.com/by-collection/654?page=$i&quickload=1");
-              var response = await Dio(BaseOptions()).get(
+              var response = await client.get(
                   "https://mobile.alphacoders.com/by-collection/654?page=$i&quickload=1");
               var document = parser.parse(response.data);
               document.getElementsByClassName("item").forEach((element) async {
@@ -215,7 +238,7 @@ class AlphaCoderWallpaper {
 
       try {
         logger.d("https://art.alphacoders.com/arts/by_collection/384");
-        var response = await Dio(BaseOptions())
+        var response = await client
             .get("https://art.alphacoders.com/arts/by_collection/384");
         var document = parser.parse(response.data);
         document
@@ -273,7 +296,7 @@ class AlphaCoderWallpaper {
 
       try {
         logger.d("https://pics.alphacoders.com/pictures/by_collection/384");
-        var response = await Dio(BaseOptions())
+        var response = await client
             .get("https://pics.alphacoders.com/pictures/by_collection/384");
         var document = parser.parse(response.data);
         document.getElementsByClassName("boxgrid").forEach((element) async {
@@ -330,7 +353,7 @@ class AlphaCoderWallpaper {
 
       try {
         logger.d("https://avatars.alphacoders.com/avatars/by_collection/384");
-        var response = await Dio(BaseOptions())
+        var response = await client
             .get("https://avatars.alphacoders.com/avatars/by_collection/384");
         var document = parser.parse(response.data);
         document
@@ -389,7 +412,7 @@ class AlphaCoderWallpaper {
 
       try {
         logger.d("https://gifs.alphacoders.com/gifs/by_collection/384");
-        var response = await Dio(BaseOptions())
+        var response = await client
             .get("https://gifs.alphacoders.com/gifs/by_collection/384");
         var document = parser.parse(response.data);
         document
@@ -453,4 +476,32 @@ class AlphaCoderWallpaper {
       // logger.d(document.getElementsByClassName("sub-title").first.innerHtml);
     } catch (e) {}
   }
+
+   Future<SaveResult> saveAlphaCoderImageToGallery({
+    required String imagePath,
+    String?fileExtinction
+  }) async {
+    var response = await Dio().get(imagePath,
+        onReceiveProgress: showDownloadProgress,
+        options: Options(responseType: ResponseType.bytes));
+    // var image = await File(imagePath).readAsBytes();
+    final result = await SaverGallery.saveImage(
+      typed_data.Uint8List.fromList(response.data),
+      skipIfExists: true,
+      androidRelativePath: "Pictures/TikTok_downloads/wallpapers",
+      fileName: '${DateTime.now().microsecondsSinceEpoch}wallpapers.${fileExtinction??'png'}',
+    );
+    return result;
+  }
+
+  void showDownloadProgress(received, total) {
+    if (total != -1) {
+      // EasyLoading.showProgress((received / total), status: 'downloading...');
+
+      if (kDebugMode) {
+        print(double.parse("${(received / total * 100).toStringAsFixed(0)}"));
+      }
+    }
+  }
+
 }
