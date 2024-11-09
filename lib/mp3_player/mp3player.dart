@@ -12,6 +12,8 @@ class Mp3player {
 
   final player = AudioPlayer();
 
+  ConcatenatingAudioSource? playlist;
+
   bool get playing => player.playing;
 
   bool get hasNext => player.hasNext;
@@ -19,6 +21,29 @@ class Mp3player {
   bool get hasPrevious => player.hasPrevious;
 
   int? get nextIndex => player.nextIndex;
+
+  setPlayListAndPlay({required List<String> urls}) async {
+    // Define the playlist
+     playlist = ConcatenatingAudioSource(
+      // Start loading next item just before reaching it
+      useLazyPreparation: true,
+      // Customise the shuffle algorithm
+      shuffleOrder: DefaultShuffleOrder(),
+      // Specify the playlist items
+      children: urls.map((e) =>  AudioSource.uri(Uri.parse(e)),).toList(),
+    );
+
+     if(playlist!=null)
+   {
+     // Load and play the playlist
+     await player.setAudioSource(playlist!, initialIndex: 0, initialPosition: Duration.zero);
+
+   }
+    await player.setLoopMode(LoopMode.all);
+
+     player.play();
+
+  }
 
   setUrlAndPlay({required String url}) async {
     if (player.playing) {
@@ -66,4 +91,33 @@ class Mp3player {
   seekToPrevious() async {
     return await player.seekToPrevious();
   }
+  seekToIndex(int index)async{
+    await player.seek(Duration.zero, index: index);
+  }
+
+  setShuffleMode(bool value)async{
+    await player.setShuffleModeEnabled(true);
+  }
+
+  updateThePlaylistAdd(AudioSource newChild)async{
+    // Update the playlist
+    await playlist?.add(newChild);
+  }
+
+
+  updateThePlaylistInsert(AudioSource newChild,int index)async{
+    // Update the playlist
+    await playlist?.insert(index,newChild);
+  }
+
+  updateThePlaylistRemove(int index)async{
+    // Update the playlist
+    await playlist?.removeAt(index);
+  }
+
+
+
+
+
+
 }

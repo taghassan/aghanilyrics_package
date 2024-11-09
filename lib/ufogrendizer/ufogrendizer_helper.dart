@@ -1,9 +1,13 @@
+
 import 'package:aghanilyrics/logger_helper.dart';
 import 'package:aghanilyrics/ufogrendizer/models/EpisodeInfoResponse.dart';
 import 'package:aghanilyrics/ufogrendizer/models/EpisodesResponseModel.dart';
+import 'package:aghanilyrics/ufogrendizer/models/SpacetoonEpisodesResponseModel.dart';
+import 'package:aghanilyrics/ufogrendizer/models/SpastoonSessionResponseModel.dart';
+import 'package:aghanilyrics/ufogrendizer/models/SpastoonsTvShowsResponseModel.dart';
 import 'package:aghanilyrics/ufogrendizer/models/TvShowsResponseModel.dart';
 import 'package:dio/dio.dart';
-
+part 'spacetoon.dart';
 enum TvShowFetchType {
   all,
   top,
