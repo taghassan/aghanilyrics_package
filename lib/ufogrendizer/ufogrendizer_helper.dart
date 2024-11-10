@@ -3,6 +3,7 @@ import 'package:aghanilyrics/logger_helper.dart';
 import 'package:aghanilyrics/ufogrendizer/models/EpisodeInfoResponse.dart';
 import 'package:aghanilyrics/ufogrendizer/models/EpisodesResponseModel.dart';
 import 'package:aghanilyrics/ufogrendizer/models/GetEpisodeLinkResponseModel.dart';
+import 'package:aghanilyrics/ufogrendizer/models/RecentEpisodesResponseModel.dart';
 import 'package:aghanilyrics/ufogrendizer/models/SpacetoonEpisodesResponseModel.dart';
 import 'package:aghanilyrics/ufogrendizer/models/SpastoonSessionResponseModel.dart';
 import 'package:aghanilyrics/ufogrendizer/models/SpastoonsTvShowsResponseModel.dart';

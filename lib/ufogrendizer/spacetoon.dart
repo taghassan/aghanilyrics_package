@@ -30,19 +30,22 @@ class SpaceToonHelper with LoggerHelper {
   }
 
   //
-  Future<List<SpacetoonEpisodesResponseModel>> fetchSpacetoonRecentEpisodes() async {
+  Future<List<RecentEpisodesResponseModel>> fetchSpacetoonRecentEpisodes() async {
     try {
       var response = await client.get(
         '/api/recentEpisodes',
       );
+
       return (response.data ?? [])
-          .map<SpacetoonEpisodesResponseModel>(
-              (e) => SpacetoonEpisodesResponseModel.fromJson(e))
+          .map<RecentEpisodesResponseModel>(
+              (e) => RecentEpisodesResponseModel.fromJson(e))
           .toList();
     } catch (e) {
+      logError(e.toString());
       rethrow;
     }
   }  //
+
   Future<List<SpacetoonEpisodesResponseModel>> fetchSpacetoonEpisodesById(
       {required String id}) async {
     try {
