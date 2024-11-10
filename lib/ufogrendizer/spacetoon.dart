@@ -21,9 +21,10 @@ class SpaceToonHelper with LoggerHelper {
       var response = await client.get("/api/$path");
       logInfo(response.data.toString());
       return (response.data ?? [])
-          .map<TvShowsResponseModel>((e) => TvShowsResponseModel.fromJson(e))
+          .map<SpastoonsTvShowsResponseModel>((e) => SpastoonsTvShowsResponseModel.fromJson(e))
           .toList();
     } catch (e) {
+      logError(e.toString());
       rethrow;
     }
   }
@@ -57,7 +58,7 @@ class SpaceToonHelper with LoggerHelper {
     }
   }
 
-   getEpisodeLink()async{
+  Future<GetEpisodeLinkResponseModel>  getEpisodeLink({required String epId})async{
 
     try{
 
@@ -70,7 +71,15 @@ class SpaceToonHelper with LoggerHelper {
 
       SpastoonSessionResponseModel session=SpastoonSessionResponseModel.fromJson(response.data);
 
+    var linkResponse=await  gteLink(
+        sessionKey: session.sessionKey??'',
+        sid: session.sid??'',
+        epid: epId
 
+      );
+
+
+    return linkResponse;
 
     }catch(e){
       rethrow;
@@ -78,12 +87,13 @@ class SpaceToonHelper with LoggerHelper {
 
 }
 
-gteLink({
+Future<GetEpisodeLinkResponseModel> gteLink({
     required String sid,
     required String epid,
     required String sessionKey,
 
 })async{
+try{
 
   var headers = {
     'origin': 'https://sp.ufogrendizer.tv',
@@ -104,13 +114,10 @@ gteLink({
     data: data,
   );
 
-  if (response.statusCode == 200) {
-    // print(json.encode(response.data));
-  }
-  else {
-    print(response.statusMessage);
-  }
-
+  return GetEpisodeLinkResponseModel.fromJson(response.data);
+}catch(e){
+  rethrow;
+}
 }
 
 }
