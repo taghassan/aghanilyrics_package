@@ -1,5 +1,9 @@
 {
-"nativeAdsList":[
+ "adInterval":1,
+ "interstitialAdUnitId":[],
+ "rewardedAdUnitId":[],
+ "bannerAdUnitId":[],
+"nativeAdUnitIds":[
  "ca-app-pub-8107574011529731/1583829429",
   "ca-app-pub-8107574011529731/1652144002",
   "ca-app-pub-8107574011529731/2115178432",
@@ -158,8 +162,6 @@
   "ca-app-pub-8107574011529731/2201742684",
   "ca-app-pub-8107574011529731/4221401365",
   "ca-app-pub-8107574011529731/5817522243"
-
-
-]
+],
 
 }
