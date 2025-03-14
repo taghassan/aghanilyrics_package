@@ -6,8 +6,8 @@ enum SpasToonTvShowFetchType {
 }
 
 class SpaceToonHelper with LoggerHelper {
-  Dio client = Dio(BaseOptions(baseUrl: "https://sp.ufogrendizer.tv"));
-
+  Dio client = Dio(BaseOptions(baseUrl: "https://ufogrendizer.tv"));//https://ufogrendizer.tv/api/sp/tvshows
+//"https://sp.ufogrendizer.tv"
   Future<List<SpastoonsTvShowsResponseModel>> fetchSpasToonTvShows(
       {SpasToonTvShowFetchType type = SpasToonTvShowFetchType.all}) async {
     try {
@@ -18,7 +18,7 @@ class SpaceToonHelper with LoggerHelper {
         case SpasToonTvShowFetchType.top:
           path = 'toptvshows';
       }
-      var response = await client.get("/api/$path");
+      var response = await client.get("/api/sp/$path");
       logInfo(response.data.toString());
       return (response.data ?? [])
           .map<SpastoonsTvShowsResponseModel>((e) => SpastoonsTvShowsResponseModel.fromJson(e))
@@ -33,7 +33,7 @@ class SpaceToonHelper with LoggerHelper {
   Future<List<RecentEpisodesResponseModel>> fetchSpacetoonRecentEpisodes() async {
     try {
       var response = await client.get(
-        '/api/recentEpisodes',
+        '/api/sp/recentEpisodes',
       );
 
       return (response.data ?? [])
@@ -50,7 +50,7 @@ class SpaceToonHelper with LoggerHelper {
       {required String id}) async {
     try {
       var response = await client.get(
-        '/api/episodes?id=$id',
+        '/api/sp/episodes?id=$id',
       );
       return (response.data ?? [])
           .map<SpacetoonEpisodesResponseModel>(
@@ -66,7 +66,7 @@ class SpaceToonHelper with LoggerHelper {
     try{
 
       var response = await client.request(
-        '/api/session',
+        '/api/sp/session',
         options: Options(
           method: 'GET',
         ),
